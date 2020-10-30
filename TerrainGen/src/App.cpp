@@ -12,55 +12,48 @@
 
 #include "vendor/noise/FastNoise.h"
 
-#include <cstdlib>     /* srand, rand */
-#include <ctime>       /* time */
+#include <ctime>
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow* window);
+void processInput(GLFWwindow* window, double deltaTime);
 
-
-// SIZE is the overall size of the terrain so the terrain will be SIZE x SIZE
-// VERTEX_COUNT is the number of vertiecies on one side of the terrain
-// so the size of one square will be SIZE / VERTEX_COUNT
-const unsigned int VERTEX_COUNT = 1000;
-const float SIZE = 50.0f;
-
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+constexpr unsigned SCR_WIDTH = 1920;
+constexpr unsigned SCR_HEIGHT = 1440;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
+Camera camera(glm::vec3(-3.0f, 3.0f, 5.0f));
+double lastX = SCR_WIDTH / 2.0;
+double lastY = SCR_HEIGHT / 2.0;
 bool firstMouse = true;
 
-// timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
+// settings
+// use F1, F2, F3
+bool flag = false; 
 
-// F1 F2 change the rendering mode
-unsigned char wireFrame;
+// triangles size = SIZE / VERTEX_COUNT
+constexpr unsigned int VERTEX_COUNT = 200;
+constexpr float SIZE = 10.0f;
 
-glm::vec3 LIGHT_POS = glm::vec3(1.5f, 3.f, 1.5f);
 
 //Color generation settings
-constexpr float COLOUR_SPREAD = 0.45f; // 0.45
-const std::vector<Color> TERRAIN_COLS = { Color(201, 178, 99),Color(135, 184, 82),Color(80, 171, 93), Color(120, 120, 120),Color(200, 200, 210) };
+constexpr float COLOUR_SPREAD = 0.45f; 
+const std::vector<Color> TERRAIN_COLS = {
+	Color(201, 178,  99),
+	Color(135, 184,  82),
+	Color( 80, 171,  93),
+	Color(120, 120, 120),
+	Color(200, 200, 210)};
 
-NormalGenerator normalGenerator(VERTEX_COUNT);
-
-int storeQuad1(unsigned int* indices, int pointer, int topLeft, int topRight, int bottomLeft, int bottomRight,
-	bool mixed);
-
-int storeQuad2(unsigned int* indices, int pointer, int topLeft, int topRight, int bottomLeft, int bottomRight,
-	bool mixed);
-
-
-
+constexpr FastNoise::NoiseType	 NOISE_TYPE = FastNoise::NoiseType::ValueFractal;
+constexpr float					 FREQUENCY = 0.07f;
+constexpr unsigned				 FRACTAL_OCTAVES = 8;
+constexpr FastNoise::Interp	     INTERP = FastNoise::Interp::Linear;
+constexpr FastNoise::FractalType TYPE = FastNoise::FractalType::FBM;
+constexpr float					 LACUNARITY = 2.5f;
+constexpr float					 GAIN = 0.5f;
 
 int main()
 {
@@ -74,8 +67,8 @@ int main()
 
 	// glfw window creation
 	// --------------------
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", /*glfwGetPrimaryMonitor()*/NULL, NULL);
-	if (window == NULL)
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", /*glfwGetPrimaryMonitor()*/nullptr, nullptr);
+	if (window == nullptr)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
@@ -83,13 +76,12 @@ int main()
 	}
 
 	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetCursorPosCallback(window, mouse_callback);
-	glfwSetScrollCallback(window, scroll_callback);
-	// tell GLFW to capture our mouse
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glfwSwapInterval(1);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 
 
@@ -101,15 +93,22 @@ int main()
 		return -1;
 	}
 
+
+
 	Shader ourShader("res/shaders/vertex.glsl", "res/shaders/fragment.glsl");
-	ColourGenerator colorGen(TERRAIN_COLS, COLOUR_SPREAD);
+	NormalGenerator normalGenerator(VERTEX_COUNT);
+	ColourGenerator colorGen(TERRAIN_COLS, COLOUR_SPREAD, VERTEX_COUNT);
 	IndexGenerator indexGenerator;
 
 	FastNoise noiseGenerator(std::rand());
-	noiseGenerator.SetFrequency(0.06f);
-	noiseGenerator.SetFractalOctaves(8);
-	noiseGenerator.SetInterp(FastNoise::Interp::Linear);
-	noiseGenerator.SetGradientPerturbAmp(3.0f);
+	noiseGenerator.SetNoiseType(NOISE_TYPE);
+	noiseGenerator.SetFrequency(FREQUENCY);
+	noiseGenerator.SetFractalOctaves(FRACTAL_OCTAVES);
+	noiseGenerator.SetInterp(INTERP);
+	noiseGenerator.SetFractalType(TYPE);
+	noiseGenerator.SetFractalLacunarity(LACUNARITY);
+	noiseGenerator.SetFractalGain(GAIN);
+
 
 	//allocationg memory
 	int count = VERTEX_COUNT * VERTEX_COUNT;
@@ -117,11 +116,12 @@ int main()
 	float* normals = new float[count * 3];
 	float* colors = new float[count * 3];
 
-	unsigned int* indices = new unsigned int[6 * (VERTEX_COUNT - 1) * (VERTEX_COUNT - 1)];
-
 	float** heights = new float* [VERTEX_COUNT];
 	for (int i = 0; i < VERTEX_COUNT; i++)
 		heights[i] = new float[VERTEX_COUNT];
+
+	unsigned int* indices = new unsigned int[6 * (VERTEX_COUNT - 1) * (VERTEX_COUNT - 1)];
+
 
 
 	//genereting terrain values
@@ -130,31 +130,11 @@ int main()
 		for (int j = 0; j < VERTEX_COUNT; j++) {
 			// vertices
 			vertices[vertexPointer * 3 + 0] = (float)j / ((float)VERTEX_COUNT - 1) * SIZE;
-
-			float noiseValue = noiseGenerator.GetPerlinFractal(j, i);
-			vertices[vertexPointer * 3 + 1] = noiseValue;
-			heights[j][i] = noiseValue;
-
 			vertices[vertexPointer * 3 + 2] = (float)i / ((float)VERTEX_COUNT - 1) * SIZE;
 
 			vertexPointer++;
 		}
 	}
-
-	float low = 2.0f;
-	float high = -2.0f;
-	for (int i = 0; i < VERTEX_COUNT; i++)
-	{
-		for (int j = 0; j < VERTEX_COUNT; j++)
-		{
-			if (heights[j][i] < low)
-				low = heights[j][i];
-			if (heights[j][i] > high)
-				high = heights[j][i];
-		}
-	}
-	std::cout << "Heighest: " << high << std::endl;
-	std::cout << "Lowest: " << low << std::endl;
 
 	int pointer = 0;
 	for (int col = 0; col < VERTEX_COUNT - 1; col++)
@@ -175,8 +155,24 @@ int main()
 			}
 		}
 	}
+
+	int heightPointer = 0;
+	for (int i = 0; i < VERTEX_COUNT; i++) {
+		for (int j = 0; j < VERTEX_COUNT; j++) {
+
+			float noiseValue = noiseGenerator.GetNoise(j, i);
+			vertices[heightPointer * 3 + 1] = noiseValue;
+			heights[j][i] = noiseValue;
+
+			heightPointer++;
+		}
+	}
+
 	normalGenerator.generateNormals(heights, normals);
-	colorGen.generateColours(heights, 1.0f, colors, VERTEX_COUNT);
+	colorGen.generateColours(heights, 1.0f, colors);
+
+	// configure global opengl state
+	// -----------------------------
 
 	unsigned int verticesVBO, normalsVBO, colorsVBO, EBO, VAO;
 
@@ -200,7 +196,6 @@ int main()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * (VERTEX_COUNT - 1) * (VERTEX_COUNT - 1) * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 
-
 	glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -213,23 +208,15 @@ int main()
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(2);
 
-	delete[] vertices;
-	delete[] normals;
-	delete[] indices;
-	delete[] colors;
-
-	for (int i = 0; i < VERTEX_COUNT; i++)
-		delete[] heights[i];
-	delete[] heights;
-
-	// configure global opengl state
-	// -----------------------------
 
 	glEnable(GL_DEPTH_TEST);
 	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
 
 	ourShader.use();
-	ourShader.setVec3("lightPos", LIGHT_POS);
+
+	// timing
+	double deltaTime = 0.0f;
+	double lastFrame = 0.0f;
 
 	// render loop
 	// -----------
@@ -237,13 +224,63 @@ int main()
 	{
 		// per-frame time logic
 		// --------------------
-		float currentFrame = glfwGetTime();
+		double currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
+		
+		flag = false;
 
 		// input
 		// -----
-		processInput(window);
+		processInput(window, deltaTime);
+
+		// if true we need to update our draw data
+		if (flag) 
+		{
+			noiseGenerator.SetSeed(static_cast<int>(time(nullptr)));
+			int heightPointer = 0;
+			for (int i = 0; i < VERTEX_COUNT; i++) {
+				for (int j = 0; j < VERTEX_COUNT; j++) {
+
+					float noiseValue = noiseGenerator.GetNoise(j, i);
+					vertices[heightPointer * 3 + 1] = noiseValue;
+					heights[j][i] = noiseValue;
+
+					heightPointer++;
+				}
+			}
+
+			normalGenerator.generateNormals(heights, normals);
+			colorGen.generateColours(heights, 1.0f, colors);
+
+
+
+			glBindVertexArray(VAO);
+
+			glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
+			glBufferData(GL_ARRAY_BUFFER, count * 3 * sizeof(float), vertices, GL_STATIC_DRAW);
+
+			glBindBuffer(GL_ARRAY_BUFFER, normalsVBO);
+			glBufferData(GL_ARRAY_BUFFER, count * 3 * sizeof(float), normals, GL_STATIC_DRAW);
+
+			glBindBuffer(GL_ARRAY_BUFFER, colorsVBO);
+			glBufferData(GL_ARRAY_BUFFER, count * 3 * sizeof(float), colors, GL_STATIC_DRAW);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * (VERTEX_COUNT - 1) * (VERTEX_COUNT - 1) * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
+			glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(0);
+
+			glBindBuffer(GL_ARRAY_BUFFER, normalsVBO);
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(1);
+
+			glBindBuffer(GL_ARRAY_BUFFER, colorsVBO);
+			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+			glEnableVertexAttribArray(2);
+		}
 
 		// render
 		// ------
@@ -254,54 +291,69 @@ int main()
 		glm::mat4 view = camera.GetViewMatrix();
 		ourShader.setMat4("projection", projection);
 		ourShader.setMat4("view", view);
-		glBindVertexArray(VAO);
 
+		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6 * (VERTEX_COUNT - 1) * (VERTEX_COUNT - 1), GL_UNSIGNED_INT, 0);
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
 	// optional: de-allocate all resources once they've outlived their purpose:
 	// ------------------------------------------------------------------------
+
+
+	delete[] vertices;
+	delete[] normals;
+	delete[] indices;
+	delete[] colors;
+
+	for (int i = 0; i < VERTEX_COUNT; i++)
+		delete[] heights[i];
+	delete[] heights;
+
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &verticesVBO);
 	glDeleteBuffers(1, &normalsVBO);
 	glDeleteBuffers(1, &colorsVBO);
 	glDeleteBuffers(1, &EBO);
 
-
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	// ------------------------------------------------------------------
 	glfwTerminate();
+
 	return 0;
 }
 
+
+
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow* window, double deltaTime)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera.ProcessKeyboard(FORWARD, deltaTime);
+		camera.ProcessKeyboard(Camera_Movement::FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.ProcessKeyboard(BACKWARD, deltaTime);
+		camera.ProcessKeyboard(Camera_Movement::BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera.ProcessKeyboard(LEFT, deltaTime);
+		camera.ProcessKeyboard(Camera_Movement::LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera.ProcessKeyboard(RIGHT, deltaTime);
+		camera.ProcessKeyboard(Camera_Movement::RIGHT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-		camera.ProcessKeyboard(UP, deltaTime);
+		camera.ProcessKeyboard(Camera_Movement::UP, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-		camera.ProcessKeyboard(DOWN, deltaTime);
+		camera.ProcessKeyboard(Camera_Movement::DOWN, deltaTime);
 
 	if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	//std::cout << camera.Position.x << ' ' << camera.Position.y << ' ' << camera.Position.z << std::endl;
+	if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS)
+		flag = true;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -320,18 +372,18 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	if (firstMouse)
 	{
-		lastX = xpos;
-		lastY = ypos;
+		lastX =	xpos;
+		lastY =	ypos;
 		firstMouse = false;
 	}
 
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+	double xoffset = xpos - lastX;
+	double yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
 	lastX = xpos;
 	lastY = ypos;
 
-	camera.ProcessMouseMovement(xoffset, yoffset);
+	camera.ProcessMouseMovement(static_cast<float>(xoffset), static_cast<float>(yoffset));
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called

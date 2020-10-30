@@ -2,61 +2,39 @@
 
 #include <vector>
 #include <cmath>
-#include <algorithm>
 
 struct Color
 {
 	float r, g, b;
-	Color(float _r, float _g, float _b)
-		:r(_r), g(_g), b(_b)
+	Color(float r, float g, float b)
+		:r(r), g(g), b(b)
 	{}
 };
 
-class ColourGenerator {
+class ColourGenerator 
+{
 private:
-	float spread;
-	float halfSpread;
+	const float m_spread;
+	const float m_halfSpread;
+	const int m_vertexCount;
 
-	std::vector<Color> biomeColours;
-	float part;
+	const std::vector<Color> m_biomeColours;
+	const float m_part;
 
-	/**
-	 * @param biomeColours
-	 *            - The preset colours that will be interpolated over the
-	 *            terrain. The first colours in this array will be used for the
-	 *            lowest parts of the terrain, and the last colours in this
-	 *            array will be used for the highest. All the other colours will
-	 *            be spread out linearly inbetween.
-	 * @param spread
-	 *            - This indicates how much of the possible altitude range the
-	 *            colours should be spread over. If this is too high the extreme
-	 *            colours won't be used as there won't be any terrain vertices
-	 *            high or low enough (the heights generator doesn't usually fill
-	 *            the whole altitude range).
-	 */
 public:
-	ColourGenerator(const std::vector<Color>& biomeColours, float spread)
-		:biomeColours(biomeColours), spread(spread), halfSpread(spread / 2.f), part(1.f / (biomeColours.size() - 1))
+	ColourGenerator(const std::vector<Color>& biomeColours, float spread, int vertexCount)
+
+		:m_biomeColours(biomeColours), m_spread(spread),
+		m_halfSpread(spread / 2.f), m_part(1.f / (biomeColours.size() - 1)),
+		m_vertexCount(vertexCount)
 	{}
 
-	/**
-	 * Calculates the colour for every vertex of the terrain, by linearly
-	 * interpolating between the biome colours depending on the vertex's height.
-	 *
-	 * @param heights
-	 *            -The heights of all the vertices in the terrain.
-	 * @param amplitude
-	 *            - The amplitude range of the terrain that was used in the
-	 *            heights generation. Maximum possible height is
-	 *            {@code altitude} and minimum possible is {@code -altitude}.
-	 * @return The colours of all the vertices in the terrain, in a grid.
-	 */
-	void generateColours(float** heights, float amplitude, float* colors, int size)
+	void generateColours(float** heights, float amplitude, float* colors) const
 	{
 		int pointer = 0;
-		for (int z = 0; z < size; z++)
+		for (int z = 0; z < m_vertexCount; z++)
 		{
-			for (int x = 0; x < size; x++)
+			for (int x = 0; x < m_vertexCount; x++)
 			{
 				Color c = calculateColour(heights[x][z], amplitude);
 				colors[pointer++] = c.r;
@@ -66,13 +44,8 @@ public:
 		}
 	}
 
-	/**Determines the colour of the vertex based on the provided height.
-	 * @param height - Height of the vertex.
-	 * @param amplitude - The maximum height that a vertex can be (
-	 * @return
-	 */
 private:
-	Color interpolateColours(Color a, Color b, float blend)
+	Color interpolateColours(Color a, Color b, float blend) const
 	{
 		float colorWeight1 = 1.0f - blend;
 		float r1 = a.r / 255.0f;
@@ -89,18 +62,18 @@ private:
 
 		return Color(r3,g3,b3);
 	}
-	Color calculateColour(float height, float amplitude) {
+	Color calculateColour(float height, float amplitude) const
+	{
 		
 		float value = (height + amplitude) / (amplitude * 2);
 
 		// clamping value 
-		float v = (value - halfSpread) * (1.f / spread);
+		float v = (value - m_halfSpread) * (1.f / m_spread);
 		value = v < 0.0f ? 0.0f : v > 0.9999f ? 0.9999f : v;
 
-		int firstBiome = (int)floor(value / part);
-		float blend = (value - (firstBiome * part)) / part;
-		return interpolateColours(biomeColours[firstBiome], biomeColours[firstBiome + 1], blend);
+		int firstBiome = (int)floor(value / m_part);
+		float blend = (value - (firstBiome * m_part)) / m_part;
 
-		
+		return interpolateColours(m_biomeColours[firstBiome], m_biomeColours[firstBiome + 1], blend);
 	}
 };
