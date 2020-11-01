@@ -1,7 +1,5 @@
---include "./TerrainGen/src/vendor/premake/premake_customization/solution_items.lua"
-
 workspace "TerrainGen"
-	architecture "x86_64"
+	architecture "x86"
 	startproject "TerrainGen"
 
 	configurations
@@ -21,12 +19,10 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 IncludeDir = {}
 IncludeDir["GLFW"] = "%{wks.location}/Dependencies/GLFW/include"
 IncludeDir["GLEW"] = "%{wks.location}/Dependencies/GLEW/include"
-IncludeDir["glm"] = "%{wks.location}/TerrainGen/src/vendor/glm"
-IncludeDir["noise"] =  "%{wks.location}/TerrainGen/src/vendor/noise"
 
 
 project "TerrainGen"
-	kind "WindowedApp"
+	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++17"
 	staticruntime "on"
@@ -37,8 +33,8 @@ project "TerrainGen"
 
 	files
 	{
-		"%{wks.location}/TerrainGen/src/**.h",
-		"%{wks.location}/TerrainGen/src/**.cpp",
+		"%{wks.location}/TerrainGen/src/*.h",
+		"%{wks.location}/TerrainGen/src/*.cpp",
 		"%{wks.location}/TerrainGen/src/vendor/glm/glm/**.hpp",
 		"%{wks.location}/TerrainGen/src/vendor/glm/glm/**.inl",
 		"%{wks.location}/TerrainGen/src/vendor/noise/**.h",
@@ -54,15 +50,18 @@ project "TerrainGen"
 	{
 		"vendor",
 		"%{IncludeDir.GLFW}",
-		"%{IncludeDir.GLEW}",
-		"%{IncludeDir.glm}"
+		"%{IncludeDir.GLEW}"
 	}
 
 	links
 	{
 		"GLFW",
-		"GLEW",
-		"opengl32.lib"
+		"Dependencies/GLEW/lib/Release/Win32/glew32s.lib",
+		"opengl32.lib",
+		"OpenGL32.lib",
+		"User32.lib",
+		"gdi32.lib",
+		"Shell32.lib"
 	}
 
 	filter "configurations:Debug"
@@ -73,11 +72,10 @@ project "TerrainGen"
 		runtime "Release"
 		optimize "on"
 
---group "Dependencies"
---	include "TerrainGen/src/vendor/premake"
---	include "Dependencies/GLFW"
---	include "Dependencies/GLEW"
---group ""
+group "Dependencies"
+	--include "TerrainGen/src/vendor/premake"
+	include "Dependencies/GLFW"
+group ""
 
 --include "TerrainGen"
 
