@@ -1,4 +1,4 @@
-include "./TerrainGen/src/vendor/premake/premake_customization/solution_items.lua"
+--include "./TerrainGen/src/vendor/premake/premake_customization/solution_items.lua"
 
 workspace "TerrainGen"
 	architecture "x86_64"
@@ -15,9 +15,18 @@ workspace "TerrainGen"
 		"MultiProcessorCompile"
 	}
 
+outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+
+--Include directories relative to root folder (solution directory)
+IncludeDir = {}
+IncludeDir["GLFW"] = "%{wks.location}/Dependencies/GLFW/include"
+IncludeDir["GLEW"] = "%{wks.location}/Dependencies/GLEW/include"
+IncludeDir["glm"] = "%{wks.location}/TerrainGen/src/vendor/glm"
+IncludeDir["noise"] =  "%{wks.location}/TerrainGen/src/vendor/noise"
+
 
 project "TerrainGen"
-	kind "StaticLib"
+	kind "WindowedApp"
 	language "C++"
 	cppdialect "C++17"
 	staticruntime "on"
@@ -43,7 +52,7 @@ project "TerrainGen"
 
 	includedirs
 	{
-		"%{wks.location}/TerrainGen/src/vendor",
+		"vendor",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.GLEW}",
 		"%{IncludeDir.glm}"
@@ -64,21 +73,12 @@ project "TerrainGen"
 		runtime "Release"
 		optimize "on"
 
+--group "Dependencies"
+--	include "TerrainGen/src/vendor/premake"
+--	include "Dependencies/GLFW"
+--	include "Dependencies/GLEW"
+--group ""
 
-outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+--include "TerrainGen"
 
--- Include directories relative to root folder (solution directory)
-IncludeDir = {}
-IncludeDir["GLFW"] = "%{wks.location}/Dependencies/GLFW/include"
-IncludeDir["Glad"] = "%{wks.location}/Dependencies/GLEW/include"
-IncludeDir["glm"] = "%{wks.location}/TerrainGen/src/vendor/glm"
-IncludeDir["noise"] =  "%{wks.location}/TerrainGen/src/vendor/noise"
-
-group "Dependencies"
-	include "TerrainGen/src/vendor/premake"
-	include "Dependencies/GLFW"
-	include "Dependencies/GLEW"
-group ""
-
-include "TerrainGen"
 
