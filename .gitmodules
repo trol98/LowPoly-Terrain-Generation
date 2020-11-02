@@ -1,6 +1,6 @@
 [submodule "Dependencies/GLFW"]
 	path = Dependencies/GLFW
-	url = https://github.com/trol98/glfw
+	url = https://github.com/trol98/glfw/tree/master
 	branch = master
 [submodule "TerrainGen/src/vendor/glm"]
 	path = TerrainGen/src/vendor/glm
