@@ -1,7 +1,7 @@
 #pragma once
 
 #include <GL/glew.h>
-
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -23,6 +23,7 @@ public:
 		// ensure ifstream objects can throw exceptions:
 		vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 		fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+		//system("dir");
 		try
 		{
 			// open files

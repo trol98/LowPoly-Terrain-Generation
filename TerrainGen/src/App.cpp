@@ -95,7 +95,7 @@ int main()
 
 
 
-	Shader ourShader("res/shaders/vertex.glsl", "res/shaders/fragment.glsl");
+	Shader ourShader("TerrainGen/res/shaders/vertex.glsl", "TerrainGen/res/shaders/fragment.glsl");
 	NormalGenerator normalGenerator(VERTEX_COUNT);
 	ColourGenerator colorGen(TERRAIN_COLS, COLOUR_SPREAD, VERTEX_COUNT);
 	IndexGenerator indexGenerator;
@@ -212,7 +212,7 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
 
-	ourShader.use();
+	//ourShader.use();
 
 	// timing
 	double deltaTime = 0.0f;
@@ -221,13 +221,13 @@ int main()
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
-	{
+	{	
 		// per-frame time logic
 		// --------------------
 		double currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-		
+
 		flag = false;
 
 		// input
@@ -235,7 +235,7 @@ int main()
 		processInput(window, deltaTime);
 
 		// if true we need to update our draw data
-		if (flag) 
+		if (flag)
 		{
 			noiseGenerator.SetSeed(static_cast<int>(time(nullptr)));
 			int heightPointer = 0;
@@ -321,8 +321,8 @@ int main()
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	// ------------------------------------------------------------------
 	glfwTerminate();
-
-	return 0;
+	
+		return 0;
 }
 
 

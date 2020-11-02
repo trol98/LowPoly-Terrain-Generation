@@ -73,10 +73,12 @@ project "TerrainGen"
 		optimize "on"
 
 group "Dependencies"
-	--include "TerrainGen/src/vendor/premake"
+	include "TerrainGen/src/vendor/premake"
 	include "Dependencies/GLFW"
 group ""
 
 --include "TerrainGen"
+--include "GLFW"
+--include "premake"
 
 
