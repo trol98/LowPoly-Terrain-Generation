@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include "vendor/glm/glm/glm.hpp"
@@ -35,7 +35,7 @@ bool flag = false;
 
 // triangles size = SIZE / VERTEX_COUNT
 constexpr unsigned int VERTEX_COUNT = 200;
-constexpr float SIZE = 10.0f;
+constexpr float VERTEX_SIZE = 10.0f;
 
 
 //Color generation settings
@@ -85,11 +85,9 @@ int main()
 
 
 
-	// glew: load all OpenGL function pointers
-	// ---------------------------------------
-	if (glewInit() != GLEW_OK)
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
-		std::cout << "Failed to initialize GLEW" << std::endl;
+		std::puts("Failed to initialize GLAD");
 		return -1;
 	}
 
@@ -129,8 +127,8 @@ int main()
 	for (int i = 0; i < VERTEX_COUNT; i++) {
 		for (int j = 0; j < VERTEX_COUNT; j++) {
 			// vertices
-			vertices[vertexPointer * 3 + 0] = (float)j / ((float)VERTEX_COUNT - 1) * SIZE;
-			vertices[vertexPointer * 3 + 2] = (float)i / ((float)VERTEX_COUNT - 1) * SIZE;
+			vertices[vertexPointer * 3 + 0] = (float)j / ((float)VERTEX_COUNT - 1) * VERTEX_SIZE;
+			vertices[vertexPointer * 3 + 2] = (float)i / ((float)VERTEX_COUNT - 1) * VERTEX_SIZE;
 
 			vertexPointer++;
 		}

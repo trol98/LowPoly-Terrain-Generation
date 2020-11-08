@@ -18,7 +18,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 --Include directories relative to root folder (solution directory)
 IncludeDir = {}
 IncludeDir["GLFW"] = "%{wks.location}/Dependencies/GLFW/include"
-IncludeDir["GLEW"] = "%{wks.location}/Dependencies/GLEW/include"
+IncludeDir["Glad"] = "%{wks.location}/Dependencies/Glad/include"
 
 
 project "TerrainGen"
@@ -50,18 +50,14 @@ project "TerrainGen"
 	{
 		"vendor",
 		"%{IncludeDir.GLFW}",
-		"%{IncludeDir.GLEW}"
+		"%{IncludeDir.Glad}"
 	}
 
 	links
 	{
 		"GLFW",
-		"Dependencies/GLEW/lib/Release/Win32/glew32s.lib",
-		"opengl32.lib",
-		"OpenGL32.lib",
-		"User32.lib",
-		"gdi32.lib",
-		"Shell32.lib"
+		"Glad",
+		"opengl32.lib"
 	}
 
 	filter "configurations:Debug"
@@ -75,10 +71,12 @@ project "TerrainGen"
 group "Dependencies"
 	include "TerrainGen/src/vendor/premake"
 	include "Dependencies/GLFW"
+	include "Dependencies/Glad"
 group ""
 
 --include "TerrainGen"
 --include "GLFW"
 --include "premake"
+--include "Glad"
 
 
