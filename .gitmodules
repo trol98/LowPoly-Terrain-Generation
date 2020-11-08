@@ -1,6 +1,6 @@
 [submodule "Dependencies/GLFW"]
 	path = Dependencies/GLFW
-	url = ../../trol98/glfw.git
+	url = ../../TheCherno/glfw.git
 	branch = master
 [submodule "TerrainGen/src/vendor/glm"]
 	path = TerrainGen/src/vendor/glm
