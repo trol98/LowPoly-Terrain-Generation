@@ -57,7 +57,10 @@ project "TerrainGen"
 	{
 		"GLFW",
 		"Glad",
-		"opengl32.lib"
+		"OpenGL32.lib",
+		"User32.lib",
+		"gdi32.lib",
+		"Shell32.lib"
 	}
 
 	filter "configurations:Debug"

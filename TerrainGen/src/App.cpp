@@ -15,6 +15,7 @@
 #include <ctime>
 #include <iostream>
 
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -91,13 +92,10 @@ int main()
 		return -1;
 	}
 
-
-
 	Shader ourShader("TerrainGen/res/shaders/vertex.glsl", "TerrainGen/res/shaders/fragment.glsl");
 	NormalGenerator normalGenerator(VERTEX_COUNT);
 	ColourGenerator colorGen(TERRAIN_COLS, COLOUR_SPREAD, VERTEX_COUNT);
 	IndexGenerator indexGenerator;
-
 	FastNoise noiseGenerator(std::rand());
 	noiseGenerator.SetNoiseType(NOISE_TYPE);
 	noiseGenerator.SetFrequency(FREQUENCY);
@@ -165,7 +163,6 @@ int main()
 			heightPointer++;
 		}
 	}
-
 	normalGenerator.generateNormals(heights, normals);
 	colorGen.generateColours(heights, 1.0f, colors);
 
@@ -210,12 +207,12 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	glProvokingVertex(GL_FIRST_VERTEX_CONVENTION);
 
-	//ourShader.use();
+	ourShader.use();
 
 	// timing
 	double deltaTime = 0.0f;
 	double lastFrame = 0.0f;
-
+	
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
@@ -231,7 +228,7 @@ int main()
 		// input
 		// -----
 		processInput(window, deltaTime);
-
+		
 		// if true we need to update our draw data
 		if (flag)
 		{
