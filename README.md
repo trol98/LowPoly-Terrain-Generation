@@ -9,4 +9,4 @@ Start by cloning the repository with `git clone --recursive https://github.com/t
 
 If the repository was cloned non-recursively previously, use `git submodule update --init` to clone the necessary submodules.
 
-Run the `build.bat` file, after this project file will be generated including `TerrainGen.sln` solution file.
+Run the `build.bat` file, after this project files will be generated including `TerrainGen.sln` solution file.
