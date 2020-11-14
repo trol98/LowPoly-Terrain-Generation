@@ -82,3 +82,5 @@ tests/title
 tests/triangle-vulkan
 tests/windows
 
+#PNG files
+*.png
